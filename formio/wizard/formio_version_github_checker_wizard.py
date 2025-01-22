@@ -1,8 +1,10 @@
 # Copyright Nova Code (http://www.novacode.nl)
 # See LICENSE file for full licensing details.
-
+import re
 import requests
 from odoo import api, fields, models, _
+
+REGEX_SEMVER_NON_PRERELEASE = r"^(?:v)?(?P<major>0|[1-9]\d*)\.(?P<minor>0|[1-9]\d*)\.(?P<patch>0|[1-9]\d*)$"
 
 
 class VersionGitHubChecker(models.TransientModel):
@@ -34,22 +36,26 @@ class VersionGitHubChecker(models.TransientModel):
         # https://developer.github.com/v3/repos/#list-repository-tags
         # - Results per page (max 100)
         # - Sorted by tag name (descending)
-        response = requests.get('https://api.github.com/repos/formio/formio.js/tags?per_page=100', headers=headers)
+        for i in range(1,11):
+            response = requests.get(f'https://api.github.com/repos/formio/formio.js/tags?per_page=100&page={i}', headers=headers)
 
-        if response.status_code == 200:
-            tags = response.json()
-            Param = self.env['ir.config_parameter'].sudo()
-            versions_to_register = Param.get_param('formio.versions_to_register').split(',')
-            existing = self.env['formio.version.github.tag'].search([]).mapped('name')
-            for t in tags:
-                if (
-                    any([t['name'].startswith(v) for v in versions_to_register])
-                    and t['name'] not in existing
-                ):
-                    tag_vals = {
-                        'name': t['name'],
-                    }
-                    res.append(tag_vals)
+            if response.status_code == 200:
+                tags = response.json()
+                Param = self.env['ir.config_parameter'].sudo()
+                versions_to_register = Param.get_param('formio.versions_to_register').split(',')
+                allow_prerelease_downloads = Param.get_param('formio.allow_prerelease_downloads')
+                existing = self.env['formio.version.github.tag'].search([]).mapped('name')
+                for t in tags:
+                    if (
+                        any([t['name'].startswith(v) for v in versions_to_register])
+                        and t['name'] not in existing
+                    ):
+                        if allow_prerelease_downloads!="True" and not re.match(REGEX_SEMVER_NON_PRERELEASE, t['name']):
+                            continue
+                        tag_vals = {
+                            'name': t['name'],
+                        }
+                        res.append(tag_vals)
         return res
 
     @api.model_create_multi

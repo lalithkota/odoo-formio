@@ -14,6 +14,7 @@ class ResConfigSettings(models.TransientModel):
     formio_default_builder_js_options = fields.Text(related='formio_default_builder_js_options_id.value', string='formio.js builder options')
     formio_github_personal_access_token = fields.Char(string='GitHub personal access token')
     formio_versions_to_register = fields.Char(string='formio.js versions to register')
+    formio_allow_prerelease_downloads = fields.Boolean(string="Allow downloading prerelease versions")
 
     @api.constrains('formio_versions_to_register')
     def _constraint_formio_versions_to_register(self):
@@ -61,6 +62,11 @@ class ResConfigSettings(models.TransientModel):
             res.update(
                 formio_versions_to_register=formio_versions_to_register
             )
+        formio_allow_prerelease_downloads = Param.get_param('formio.allow_prerelease_downloads')
+        if formio_allow_prerelease_downloads:
+            res.update(
+                formio_allow_prerelease_downloads=formio_allow_prerelease_downloads
+            )
         return res
 
     def set_values(self):
@@ -80,6 +86,10 @@ class ResConfigSettings(models.TransientModel):
         Param.sudo().set_param(
             "formio.versions_to_register",
             self.formio_versions_to_register
+        )
+        Param.sudo().set_param(
+            "formio.allow_prerelease_downloads",
+            self.formio_allow_prerelease_downloads
         )
 
         context = {'active_test': False}

@@ -57,6 +57,10 @@ License LGPL-3.0 or later (http://www.gnu.org/licenses/lgpl.html) -->
                                 When adding a new Form Builder, use this formio.js client/library version.
                             </div>
                         </setting>
+                        <setting>
+                            <label for="formio_allow_prerelease_downloads" string="Allow downloading prerelease Versions" class="col-md-4"/>
+                            <field name="formio_allow_prerelease_downloads"/>
+                        </setting>
                     </block>
                     <block title="Default CSS assets" name="default_css_assets">
                         <setting string="Add additional CSS files to be included for every new installed formio.js client/library."
